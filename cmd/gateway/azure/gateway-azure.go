@@ -716,6 +716,16 @@ func (a *azureObjects) CopyObject(ctx context.Context, srcBucket, srcObject, des
 		logger.LogIf(ctx, err)
 		return objInfo, azureToObjectError(err, srcBucket, srcObject)
 	}
+	// If the desired action is to copy the source object without copying ts metadata,
+	// the metadata needs to be removed from the destination object after the copy completes
+	if len(azureMeta) == 0 && len(destBlob.Metadata) != 0 {
+		destBlob.Metadata = azureMeta
+		err = destBlob.SetMetadata(nil)
+		if err != nil {
+			logger.LogIf(ctx, err)
+			return objInfo, azureToObjectError(err, srcBucket, srcObject)
+		}
+	}
 	destBlob.Properties = props
 	err = destBlob.SetProperties(nil)
 	if err != nil {
